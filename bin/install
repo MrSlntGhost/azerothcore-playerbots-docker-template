@@ -5,7 +5,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)/init.sh"
 if [ -d "$ACORE_DIR" ]; then
    echo "Repository $(basename "$ACORE_DIR") already exists, skipping clone."
 else
-  git clone $GIT_ACORE_REPOSITORY
+  git clone $GIT_CORE_REPOSITORY
 fi
 
 IFS=',' read -r -a repos <<< "$GIT_MODULE_REPOSITORIES"
