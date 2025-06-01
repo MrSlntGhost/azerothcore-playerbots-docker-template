@@ -14,12 +14,12 @@ services:
     volumes:
       - ./azerothcore-wotlk/modules:/azerothcore/modules:ro
     env_file:
-      - "./conf/docker/worldserver"
+      - "./config/custom/worldserver"
   ac-authserver:
     container_name: ac-pb-authserver
     image: acore/ac-wotlk-pb-authserver:${DOCKER_IMAGE_TAG:-master}
     env_file:
-      - "./conf/docker/authserver"
+      - "./config/custom/authserver"
   ac-client-data-init:
     container_name: ac-pb-client-data-init
     image: acore/ac-wotlk-pb-client-data:${DOCKER_IMAGE_TAG:-master}
