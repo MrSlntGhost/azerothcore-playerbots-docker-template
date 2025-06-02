@@ -3,6 +3,8 @@
 /config/*
 !/config/.gitkeep
 
+/data/backup/*
+!/data/backup/.gitkeep
 /data/client/*
 !/data/client/.gitkeep
 /data/sql/*

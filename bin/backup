@@ -1,0 +1,75 @@
+#!/bin/bash
+
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)/init.sh"
+
+# Define the database container name
+CONTAINER_NAME="ac-pb-database"
+
+# Check if the Docker container is running
+if ! docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+  echo "Error: Docker container '${CONTAINER_NAME}' is not running."
+  exit 1
+fi
+
+# Prompt for MySQL root password once (input is hidden for security)
+read -s -p "Enter MySQL root password: " MYSQL_ROOT_PASSWORD
+echo ""
+
+# Generate a single timestamp for all backups
+TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
+
+# List of databases to back up
+DATABASES=("acore_auth" "acore_characters" "acore_playerbots" "acore_world")
+
+# Ensure BACKUP_SQL_DIR is set
+if [ -z "${BACKUP_SQL_DIR}" ]; then
+  echo "Error: BACKUP_SQL_DIR is not set. Please set it in init.sh or the environment."
+  exit 1
+fi
+
+# Ensure the backup directory exists
+mkdir -p "${BACKUP_SQL_DIR}"
+
+# Start total execution time measurement
+TOTAL_START_TIME=$(date +%s)
+
+# Function to show a live timer
+show_timer() {
+  local START_TIME=$1
+  local DB_NAME=$2
+  while true; do
+    local ELAPSED=$(( $(date +%s) - START_TIME ))
+    printf "\rRunning backup for %s... %ds elapsed" "$DB_NAME" "$ELAPSED"
+    sleep 1
+  done
+}
+
+# Loop through each database and create a compressed dump
+for DB in "${DATABASES[@]}"; do
+  START_TIME=$(date +%s)  # Start time for individual backup
+  
+  # Start live timer in the background
+  show_timer "$START_TIME" "$DB" &
+  TIMER_PID=$!
+
+  # Run the backup process
+  docker exec -e MYSQL_PWD="${MYSQL_ROOT_PASSWORD}" "${CONTAINER_NAME}" \
+    /bin/bash -c "/usr/bin/mysqldump -u root --databases $DB" | gzip > \
+    "${BACKUP_SQL_DIR}/${TIMESTAMP}_${DB}.sql.gz"
+
+  # Stop the live timer
+  kill "$TIMER_PID" &>/dev/null
+  wait "$TIMER_PID" 2>/dev/null
+
+  END_TIME=$(date +%s)  # End time for individual backup
+  DURATION=$((END_TIME - START_TIME))
+
+  # Clear the timer line and print final message
+  printf "\r%-30s Backup completed in %2ds\n" "$DB:" "$DURATION"
+done
+
+# End total execution time measurement
+TOTAL_END_TIME=$(date +%s)
+TOTAL_DURATION=$((TOTAL_END_TIME - TOTAL_START_TIME))
+
+echo "All backups completed in ${TOTAL_DURATION}s"
