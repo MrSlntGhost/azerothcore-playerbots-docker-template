@@ -1,25 +1,15 @@
 services:
   ac-database:
-    container_name: ac-pb-database
     volumes:
       - ${DOCKER_VOL_DB:-ac-database}:/var/lib/mysql
   ac-db-import:
-    container_name: ac-pb-db-import
-    image: acore/ac-wotlk-pb-db-import:${DOCKER_IMAGE_TAG:-master}
     volumes:
       - ${DOCKER_VOL_SQL_CUSTOM:-./data/sql/custom}:/azerothcore/data/sql/custom
   ac-worldserver:
-    container_name: ac-pb-worldserver
-    image: acore/ac-wotlk-pb-worldserver:${DOCKER_IMAGE_TAG:-master}
     volumes:
       - ./azerothcore-wotlk/modules:/azerothcore/modules:ro
     env_file:
       - "./config/custom/worldserver"
   ac-authserver:
-    container_name: ac-pb-authserver
-    image: acore/ac-wotlk-pb-authserver:${DOCKER_IMAGE_TAG:-master}
     env_file:
       - "./config/custom/authserver"
-  ac-client-data-init:
-    container_name: ac-pb-client-data-init
-    image: acore/ac-wotlk-pb-client-data:${DOCKER_IMAGE_TAG:-master}
