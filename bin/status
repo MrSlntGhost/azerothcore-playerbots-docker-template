@@ -1,0 +1,97 @@
+set -euo pipefail
+
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)/init.sh"
+
+# Function to get git info as text
+print_core_status() {
+  echo "$LINE_LONG"
+  echo "AzerothCore Core Repository Status"
+  echo "$LINE_LONG"
+  if [[ -d "$ACORE_DIR/.git" ]]; then
+    cd "$ACORE_DIR"
+    rel_path="${ACORE_DIR#$ROOT_DIR/}"
+    echo "Path: $rel_path"
+    echo "Remote: $(git remote get-url origin 2>/dev/null || echo 'N/A')"
+    echo "Branch: $(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'N/A')"
+    echo "Commit: $(git rev-parse HEAD 2>/dev/null || echo 'N/A')"
+    git status --short
+    git status -sb
+    echo
+  else
+    rel_path="${ACORE_DIR#$ROOT_DIR/}"
+    echo "Core directory not found or not a git repository: $rel_path"
+    echo
+  fi
+}
+
+print_modules_status() {
+  echo "$LINE_LONG"
+  echo "Modules Status"
+  echo "$LINE_LONG"
+  if [[ -d "$MODULES_DIR" ]]; then
+    for mod in "$MODULES_DIR"/*; do
+      if [[ -d "$mod/.git" ]]; then
+        cd "$mod"
+        rel_mod_path="${mod#$ROOT_DIR/}"
+        echo "Module: $(basename "$mod")"
+        echo "  Path: $rel_mod_path"
+        echo "  Remote: $(git remote get-url origin 2>/dev/null || echo 'N/A')"
+        echo "  Branch: $(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'N/A')"
+        echo "  Commit: $(git rev-parse HEAD 2>/dev/null || echo 'N/A')"
+        git status --short
+        git status -sb
+        echo
+      fi
+    done
+  else
+    rel_mods_path="${MODULES_DIR#$ROOT_DIR/}"
+    echo "Modules directory not found: $rel_mods_path"
+  fi
+}
+
+# Function to get git info as JSON
+print_json_status() {
+  echo -n '{'
+  # Core
+  if [[ -d "$ACORE_DIR/.git" ]]; then
+    cd "$ACORE_DIR"
+    rel_path="${ACORE_DIR#$ROOT_DIR/}"
+    core_remote=$(git remote get-url origin 2>/dev/null || echo 'N/A')
+    core_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'N/A')
+    core_commit=$(git rev-parse HEAD 2>/dev/null || echo 'N/A')
+    core_status=$(git status --short | sed ':a;N;$!ba;s/\n/; /g')
+    echo -n '"core": {'
+    echo -n '"path": "'$rel_path'", "remote": "'$core_remote'", "branch": "'$core_branch'", "commit": "'$core_commit'", "status": "'$core_status'"}'
+  else
+    rel_path="${ACORE_DIR#$ROOT_DIR/}"
+    echo -n '"core": {"error": "not found or not a git repository", "path": "'$rel_path'"}'
+  fi
+  # Modules
+  echo -n ', "modules": ['
+  first=1
+  if [[ -d "$MODULES_DIR" ]]; then
+    for mod in "$MODULES_DIR"/*; do
+      if [[ -d "$mod/.git" ]]; then
+        cd "$mod"
+        rel_mod_path="${mod#$ROOT_DIR/}"
+        mod_name=$(basename "$mod")
+        mod_remote=$(git remote get-url origin 2>/dev/null || echo 'N/A')
+        mod_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'N/A')
+        mod_commit=$(git rev-parse HEAD 2>/dev/null || echo 'N/A')
+        mod_status=$(git status --short | sed ':a;N;$!ba;s/\n/; /g')
+        if [[ $first -eq 0 ]]; then echo -n ','; fi
+        first=0
+        echo -n '{"name": "'$mod_name'", "path": "'$rel_mod_path'", "remote": "'$mod_remote'", "branch": "'$mod_branch'", "commit": "'$mod_commit'", "status": "'$mod_status'"}'
+      fi
+    done
+  fi
+  echo ']}'
+}
+
+# Main logic
+if [[ "${1:-}" == "--json" ]]; then
+  print_json_status
+else
+  print_core_status
+  print_modules_status
+fi

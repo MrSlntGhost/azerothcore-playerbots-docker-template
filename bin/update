@@ -6,3 +6,5 @@ git_update_azerothcore
 git_update_modules
 
 copy_module_sql_to_custom
+
+save_project_status

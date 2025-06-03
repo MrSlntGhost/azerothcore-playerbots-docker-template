@@ -53,3 +53,10 @@ git_update_modules() {
         fi
     done
 }
+
+# Saves the current git status (JSON) to .status in the project root directory
+save_project_status() {
+    local status_file="$ROOT_DIR/.status"
+    "$ROOT_DIR/bin/status" --json > "$status_file"
+    echo "Project status saved to $status_file"
+}
