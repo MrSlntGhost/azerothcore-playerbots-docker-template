@@ -88,9 +88,40 @@ print_json_status() {
   echo ']}'
 }
 
+# Function to get git info as gitman.yml
+print_gitman_config() {
+  echo 'sources:'
+  # Core
+  if [[ -d "$ACORE_DIR/.git" ]]; then
+    cd "$ACORE_DIR"
+    core_remote=$(git remote get-url origin 2>/dev/null || echo 'N/A')
+    core_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'master')
+    rel_path="${ACORE_DIR#$ROOT_DIR/}"
+    echo "  - repo: \"$core_remote\""
+    echo "    name: $rel_path"
+    echo "    rev: $core_branch"
+  fi
+  # Modules
+  if [[ -d "$MODULES_DIR" ]]; then
+    for mod in "$MODULES_DIR"/*; do
+      if [[ -d "$mod/.git" ]]; then
+        cd "$mod"
+        mod_remote=$(git remote get-url origin 2>/dev/null || echo 'N/A')
+        mod_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'master')
+        rel_mod_path="${mod#$ROOT_DIR/}"
+        echo "  - repo: \"$mod_remote\""
+        echo "    name: $rel_mod_path"
+        echo "    rev: $mod_branch"
+      fi
+    done
+  fi
+}
+
 # Main logic
 if [[ "${1:-}" == "--json" ]]; then
   print_json_status
+elif [[ "${1:-}" == "--gitman" ]]; then
+  print_gitman_config
 else
   print_core_status
   print_modules_status
