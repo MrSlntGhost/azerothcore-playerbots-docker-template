@@ -5,11 +5,13 @@ services:
   ac-db-import:
     volumes:
       - ${DOCKER_VOL_SQL_CUSTOM:-./data/sql/custom}:/azerothcore/data/sql/custom
+    env_file:
+      - "./config/custom/env.dbimport"
   ac-worldserver:
     volumes:
       - ./azerothcore-wotlk/modules:/azerothcore/modules:ro
     env_file:
-      - "./config/custom/worldserver"
+      - "./config/custom/env.worldserver"
   ac-authserver:
     env_file:
-      - "./config/custom/authserver"
+      - "./config/custom/env.authserver"

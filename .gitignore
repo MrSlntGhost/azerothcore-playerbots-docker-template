@@ -1,7 +1,7 @@
 /azerothcore-wotlk
 
-/config/*
-!/config/.gitkeep
+/config/base
+!/config/base/.gitkeep
 
 /data/backup/*
 !/data/backup/.gitkeep
