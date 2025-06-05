@@ -5,8 +5,8 @@
 
 /data/backup/*
 !/data/backup/.gitkeep
-/data/client/*
-!/data/client/.gitkeep
+/data/maps/*
+!/data/maps/.gitkeep
 /data/sql/*
 !/data/sql/.gitkeep
 
